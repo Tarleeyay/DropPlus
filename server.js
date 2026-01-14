@@ -163,6 +163,21 @@ app.get("/api/user/:school_id/transactions", (req, res) => {
     }
   );
 });
+// ================= ADMIN RESET =================
+const ADMIN_KEY = "RESET123"; // change if you want
+
+app.post("/api/admin/reset", (req, res) => {
+  const { key } = req.body || {};
+  if (key !== ADMIN_KEY) {
+    return res.status(401).json({ ok: false, error: "Unauthorized" });
+  }
+
+  db.serialize(() => {
+    db.run("DELETE FROM transactions");
+    db.run("UPDATE users SET points = 0");
+    res.json({ ok: true });
+  });
+});
 
 // ================= START SERVER =================
 app.listen(PORT, "0.0.0.0", () => {
@@ -171,3 +186,4 @@ app.listen(PORT, "0.0.0.0", () => {
   console.log(` Open on laptop: http://localhost:${PORT}`);
   console.log("======================================");
 });
+
