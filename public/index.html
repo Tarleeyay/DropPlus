@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DropPlus+ Leaderboard</title>
+
+<style>
+:root{
+  --primary:#95955a;
+  --secondary:#d1c085;
+  --bg:#fef7ea;
+  --card:#ffffff;
+  --text:#2d2d2d;
+}
+
+body{
+  margin:0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: var(--bg);
+  color:var(--text);
+}
+
+header{
+  background: var(--primary);
+  color:white;
+  padding:16px 14px;
+}
+
+.header-wrap{
+  max-width:1000px;
+  margin:0 auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  flex-wrap:wrap;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.brand img{
+  width:44px;
+  height:44px;
+  object-fit:contain;
+  border-radius:10px;
+  background: rgba(255,255,255,0.12);
+  padding:6px;
+}
+
+.brand .title{
+  font-size:22px;
+  font-weight:800;
+  letter-spacing:0.3px;
+}
+
+.brand .sub{
+  font-size:13px;
+  opacity:0.9;
+  margin-top:2px;
+}
+
+.container{
+  max-width:1000px;
+  margin:18px auto;
+  padding:0 14px;
+}
+
+.card{
+  background:var(--card);
+  border-radius:18px;
+  padding:16px;
+  box-shadow:0 10px 24px rgba(0,0,0,0.08);
+  border:1px solid rgba(149,149,90,0.18);
+}
+
+.actions{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:10px;
+}
+
+.actions a{
+  color:var(--primary);
+  text-decoration:none;
+  font-weight:700;
+}
+
+.btns{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+button{
+  background: var(--secondary);
+  border:none;
+  padding:10px 16px;
+  border-radius:999px;
+  cursor:pointer;
+  font-weight:800;
+  color:#2b2b2b;
+}
+
+button:hover{ filter:brightness(0.96); }
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:8px;
+  overflow:hidden;
+  border-radius:14px;
+}
+
+th{
+  background:var(--secondary);
+  padding:12px;
+  text-align:left;
+  font-size:14px;
+}
+
+td{
+  padding:12px;
+  border-bottom:1px solid #eee;
+  font-size:15px;
+}
+
+.rank{
+  font-weight:900;
+  color:var(--primary);
+  white-space:nowrap;
+}
+
+.medal{
+  font-size:18px;
+  margin-right:6px;
+}
+
+.value{
+  font-weight:900;
+}
+
+.muted{ color:#6b6b6b; font-size:14px; }
+
+.empty{
+  text-align:center;
+  padding:28px;
+  color:#777;
+}
+
+.footer{
+  text-align:center;
+  margin:18px 0 26px;
+  color:#777;
+  font-size:13px;
+}
+
+/* Fullscreen mode tweaks */
+.fullscreen .container{ max-width:none; }
+.fullscreen th, .fullscreen td{ font-size:20px; padding:16px; }
+.fullscreen .brand .title{ font-size:26px; }
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="header-wrap">
+    <div class="brand">
+      <img src="/logo.png" alt="DropPlus+ logo" />
+      <div>
+        <div class="title">DropPlus+</div>
+        <div class="sub">Bottle Recycling Reward Leaderboard</div>
+      </div>
+    </div>
+
+    <div class="btns">
+      <button onclick="toggleFullscreen()">Fullscreen</button>
+      <button onclick="load()">Refresh</button>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <div class="card">
+
+    <div class="actions">
+      <div>
+        <div style="font-weight:900;">Top Students</div>
+        <div class="muted">Sorted by total bottles</div>
+      </div>
+      <div>
+        <a href="/user.html">Check my points →</a>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width:110px;">Rank</th>
+          <th>Student ID</th>
+          <th style="width:160px;">Bottles</th> <!-- Option A -->
+          <th style="width:160px;">Points</th>
+        </tr>
+      </thead>
+      <tbody id="rows">
+        <tr><td colspan="4" class="empty">Loading...</td></tr>
+      </tbody>
+    </table>
+
+  </div>
+
+  <div class="footer">DropPlus+ • TEP 307</div>
+</div>
+
+<script>
+function medalForRank(i){
+  if(i===0) return "🥇";
+  if(i===1) return "🥈";
+  if(i===2) return "🥉";
+  return "";
+}
+
+async function load(){
+  const tbody = document.getElementById("rows");
+  tbody.innerHTML = `<tr><td colspan="4" class="empty">Loading...</td></tr>`;
+
+  try{
+    const r = await fetch("/api/leaderboard");
+    const j = await r.json();
+    if(!j.ok) throw new Error("Server error");
+
+    if(j.leaderboard.length === 0){
+      tbody.innerHTML = `<tr><td colspan="4" class="empty">No data yet. Deposit bottles to start!</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = j.leaderboard.map((u,i)=>`
+      <tr>
+        <td class="rank">
+          <span class="medal">${medalForRank(i)}</span>${i+1}
+        </td>
+        <td>${u.school_id}</td>
+        <td class="value">${u.bottles_total ?? 0}</td>
+        <td class="value">${u.points ?? 0}</td>
+      </tr>
+    `).join("");
+
+  }catch(e){
+    tbody.innerHTML = `<tr><td colspan="4" class="empty">Error loading data</td></tr>`;
+  }
+}
+
+function toggleFullscreen(){
+  if(!document.fullscreenElement){
+    document.documentElement.requestFullscreen?.();
+    document.body.classList.add("fullscreen");
+  }else{
+    document.exitFullscreen?.();
+    document.body.classList.remove("fullscreen");
+  }
+}
+
+load();
+</script>
+
+</body>
+</html>
