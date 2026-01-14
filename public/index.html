@@ -184,7 +184,9 @@ td{
     <div class="btns">
       <button onclick="toggleFullscreen()">Fullscreen</button>
       <button onclick="load()">Refresh</button>
+      <button onclick="adminReset()">Reset Day</button>
     </div>
+
   </div>
 </header>
 
@@ -257,6 +259,30 @@ async function load(){
     tbody.innerHTML = `<tr><td colspan="4" class="empty">Error loading data</td></tr>`;
   }
 }
+async function adminReset(){
+  if(!confirm("Reset ALL scores for new day?")) return;
+
+  const key = prompt("Enter admin key:");
+  if(!key) return;
+
+  try{
+    const r = await fetch("/api/admin/reset",{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ key })
+    });
+    const j = await r.json();
+    if(j.ok){
+      alert("Reset success!");
+      load();
+    }else{
+      alert("Wrong key");
+    }
+  }catch(e){
+    alert("Reset failed");
+  }
+}
+
 
 function toggleFullscreen(){
   if(!document.fullscreenElement){
@@ -275,3 +301,4 @@ setInterval(load, 5000);
 </body>
 
 </html>
+
